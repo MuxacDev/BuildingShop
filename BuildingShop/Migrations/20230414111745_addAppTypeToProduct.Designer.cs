@@ -3,14 +3,16 @@ using BuildingShop.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BuildingShop.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230414111745_addAppTypeToProduct")]
+    partial class addAppTypeToProduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,7 +62,7 @@ namespace BuildingShop.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("AppTypeId")
+                    b.Property<int>("AppId")
                         .HasColumnType("int");
 
                     b.Property<int>("CategoryId")
@@ -79,12 +81,9 @@ namespace BuildingShop.Migrations
                     b.Property<double>("Price")
                         .HasColumnType("float");
 
-                    b.Property<string>("ShortDesc")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("AppTypeId");
+                    b.HasIndex("AppId");
 
                     b.HasIndex("CategoryId");
 
@@ -95,7 +94,7 @@ namespace BuildingShop.Migrations
                 {
                     b.HasOne("BuildingShop.Models.AppType", "AppType")
                         .WithMany()
-                        .HasForeignKey("AppTypeId")
+                        .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -10,7 +10,9 @@ namespace BuildingShop.Data
 
         }
 
+        
         public DbSet<Category> Category { get; set; }
         public DbSet<AppType> AppType { get; set; }
+        public DbSet<Product> Product { get; set; }
     }
 }
