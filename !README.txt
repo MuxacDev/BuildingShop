@@ -6,4 +6,5 @@ add-migration addProductToDb
 add-migration addAppTypeToProduct
 add-migration addShortDescToProductTable
 add-migration scaffoldIdentityRazorClassLib
+add-migration addFullNameToUsersTable
 update-database

@@ -1,4 +1,5 @@
 using BuildingShop.Data;
+using BuildingShop.Utility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -34,6 +35,9 @@ namespace BuildingShop
             services.AddIdentity<IdentityUser,IdentityRole>()
                 .AddDefaultTokenProviders().AddDefaultUI()
                 .AddEntityFrameworkStores<AppDbContext>();
+
+            //mail service
+            services.AddTransient<IMailService,NullMailService>();
 
             //set sessions
             services.AddHttpContextAccessor();
