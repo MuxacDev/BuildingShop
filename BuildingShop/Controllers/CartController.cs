@@ -1,7 +1,7 @@
-﻿using BuildingShop.Data;
-using BuildingShop.Models;
-using BuildingShop.Models.ViewModels;
-using BuildingShop.Utility;
+﻿using BuildingShop_DataAccess;
+using BuildingShop_Models;
+using BuildingShop_Models.ViewModels;
+using BuildingShop_Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;

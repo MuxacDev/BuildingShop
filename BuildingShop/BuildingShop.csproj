@@ -22,4 +22,10 @@
     <Folder Include="wwwroot\templates\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BuildingShop_DataAccess\BuildingShop_DataAccess.csproj" />
+    <ProjectReference Include="..\BuildingShop_Models\BuildingShop_Models.csproj" />
+    <ProjectReference Include="..\BuildingShop_Utility\BuildingShop_Utility.csproj" />
+  </ItemGroup>
+
 </Project>

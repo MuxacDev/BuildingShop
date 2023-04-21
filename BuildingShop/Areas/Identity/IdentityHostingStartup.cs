@@ -1,5 +1,5 @@
 ﻿using System;
-using BuildingShop.Data;
+using BuildingShop_DataAccess;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI;

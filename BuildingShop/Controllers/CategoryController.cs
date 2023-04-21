@@ -1,5 +1,5 @@
-﻿using BuildingShop.Data;
-using BuildingShop.Models;
+﻿using BuildingShop_DataAccess;
+using BuildingShop_Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 using System.Collections.Generic;

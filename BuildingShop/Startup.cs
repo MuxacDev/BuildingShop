@@ -1,5 +1,5 @@
-using BuildingShop.Data;
-using BuildingShop.Utility;
+using BuildingShop_DataAccess;
+using BuildingShop_Utility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
