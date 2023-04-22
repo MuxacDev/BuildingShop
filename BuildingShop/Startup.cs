@@ -1,4 +1,6 @@
 using BuildingShop_DataAccess;
+using BuildingShop_DataAccess.Repository;
+using BuildingShop_DataAccess.Repository.IRepository;
 using BuildingShop_Utility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -47,6 +49,11 @@ namespace BuildingShop
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
+
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IAppTypeRepository, AppTypeRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
+
             services.AddControllersWithViews();
         }
 

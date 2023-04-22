@@ -1,24 +1,29 @@
 ﻿using BuildingShop_DataAccess;
+using BuildingShop_DataAccess.Repository.IRepository;
 using BuildingShop_Models;
+using BuildingShop_Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 
 namespace BuildingShop.Controllers
 {
+    [Authorize(Roles = WC.AdminRole)]
     public class CategoryController : Controller
     {
-        private readonly AppDbContext db;        
+        private readonly ICategoryRepository catRepo;        
 
-        public CategoryController(AppDbContext db)
+        public CategoryController(ICategoryRepository catRepo)
         {
-            this.db = db;
+            this.catRepo = catRepo;
         }
 
 
         public IActionResult Index()
         {
-            IEnumerable<Category> objList = db.Category;
+            IEnumerable<Category> objList = catRepo.GetAll();
             return View(objList);
         }
 
@@ -36,8 +41,8 @@ namespace BuildingShop.Controllers
         {
             if(ModelState.IsValid)
             {
-                db.Category.Add(obj);
-                db.SaveChanges();
+                catRepo.Add(obj);
+                catRepo.Save();
                 return RedirectToAction("Index");
             }
             return View(obj);
@@ -51,7 +56,7 @@ namespace BuildingShop.Controllers
             {
                 return NotFound();
             }
-            var obj = db.Category.Find(id);
+            var obj = catRepo.Find(id.GetValueOrDefault());
             if(obj==null)
             {
                 return NotFound();
@@ -67,8 +72,8 @@ namespace BuildingShop.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.Category.Update(obj);
-                db.SaveChanges();
+                catRepo.Update(obj);
+                catRepo.Save();
                 return RedirectToAction("Index");
             }
             return View(obj);
@@ -82,7 +87,7 @@ namespace BuildingShop.Controllers
             {
                 return NotFound();
             }
-            var obj = db.Category.Find(id);
+            var obj = catRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
@@ -96,13 +101,13 @@ namespace BuildingShop.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeletePost(int? id)
         {
-            var obj = db.Category.Find(id);
+            var obj = catRepo.Find(id.GetValueOrDefault());
             if (obj==null)
             {
                 return NotFound(); 
             }
-            db.Category.Remove(obj);
-            db.SaveChanges();
+            catRepo.Remove(obj);
+            catRepo.Save();
             return RedirectToAction("Index");
 
         }

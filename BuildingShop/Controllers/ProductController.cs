@@ -1,4 +1,5 @@
 ﻿using BuildingShop_DataAccess;
+using BuildingShop_DataAccess.Repository.IRepository;
 using BuildingShop_Models;
 using BuildingShop_Models.ViewModels;
 using BuildingShop_Utility;
@@ -18,20 +19,21 @@ namespace BuildingShop.Controllers
     [Authorize(Roles = WC.AdminRole)]
     public class ProductController : Controller
     {
-        private readonly AppDbContext db;
+        
+        private readonly IProductRepository prodRepo;
         private readonly IWebHostEnvironment env;
         
 
-        public ProductController(AppDbContext db, IWebHostEnvironment env)
-        {
-            this.db = db;
+        public ProductController(IProductRepository prodRepo, IWebHostEnvironment env)
+        {            
+            this.prodRepo = prodRepo;
             this.env = env;
         }
 
 
         public IActionResult Index()
         {
-            IEnumerable<Product> objList = db.Product.Include(u => u.Category).Include(u => u.AppType);
+            IEnumerable<Product> objList = prodRepo.GetAll(includeProperties:"Category,AppType");
 
             /*foreach(var obj in objList)
             {
@@ -60,16 +62,8 @@ namespace BuildingShop.Controllers
             ProductVM productVM = new ProductVM()
             {
                 Product = new Product(),
-                CategorySelectList = db.Category.Select(i => new SelectListItem
-                {
-                    Text = i.Name,
-                    Value = i.Id.ToString()
-                }),
-                AppTypeSelectList = db.AppType.Select(i => new SelectListItem
-                {
-                    Text = i.Name,
-                    Value = i.Id.ToString()
-                })
+                CategorySelectList = prodRepo.GetAllDropdownList(WC.CategoryName),
+                AppTypeSelectList = prodRepo.GetAllDropdownList(WC.AppTypeName)
             };
 
             if(id==null)
@@ -79,7 +73,7 @@ namespace BuildingShop.Controllers
             }
             else
             {
-                productVM.Product = db.Product.Find(id);
+                productVM.Product = prodRepo.Find(id.GetValueOrDefault());
                 if(productVM.Product == null)
                 {
                     return NotFound();
@@ -112,12 +106,12 @@ namespace BuildingShop.Controllers
 
                     productVM.Product.Image = fileName + extension;
 
-                    db.Product.Add(productVM.Product);
+                    prodRepo.Add(productVM.Product);
                 }
                 else
                 {
                     //updating
-                    var objFromDb = db.Product.AsNoTracking().FirstOrDefault(u=>u.Id==productVM.Product.Id);
+                    var objFromDb = prodRepo.FirstOrDefault(u=>u.Id==productVM.Product.Id,isTracking:false);
 
                     if (files.Count > 0)
                     {
@@ -142,21 +136,13 @@ namespace BuildingShop.Controllers
                     {
                         productVM.Product.Image=objFromDb.Image;
                     }
-                    db.Product.Update(productVM.Product);
+                    prodRepo.Update(productVM.Product);
                 }
-                db.SaveChanges();
+                prodRepo.Save();
                 return RedirectToAction("Index");
             }
-            productVM.CategorySelectList = db.Category.Select(i => new SelectListItem
-            {
-                Text = i.Name,
-                Value = i.Id.ToString()
-            });
-            productVM.AppTypeSelectList = db.AppType.Select(i => new SelectListItem
-            {
-                Text = i.Name,
-                Value = i.Id.ToString()
-            });
+            productVM.CategorySelectList = prodRepo.GetAllDropdownList(WC.CategoryName);
+            productVM.AppTypeSelectList = prodRepo.GetAllDropdownList(WC.AppTypeName);          
 
 
             return View(productVM);
@@ -170,7 +156,7 @@ namespace BuildingShop.Controllers
             {
                 return NotFound();
             }
-            Product product = db.Product.Include(u=>u.Category).Include(u => u.AppType).FirstOrDefault(u=>u.Id==id);
+            Product product = prodRepo.FirstOrDefault(u => u.Id == id,includeProperties:"Category,AppType");
             //product.Category= db.Category.Find(product.CategoryId);
             if (product == null)
             {
@@ -185,7 +171,7 @@ namespace BuildingShop.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeletePost(int? id)
         {
-            var obj = db.Product.Find(id);
+            var obj = prodRepo.Find(id.GetValueOrDefault());
             if (obj==null)
             {
                 return NotFound(); 
@@ -200,8 +186,8 @@ namespace BuildingShop.Controllers
                 System.IO.File.Delete(oldFile);
             }
 
-            db.Product.Remove(obj);
-            db.SaveChanges();
+            prodRepo.Remove(obj);
+            prodRepo.Save();
             return RedirectToAction("Index");
 
         }

@@ -1,24 +1,29 @@
 ﻿using BuildingShop_DataAccess;
+using BuildingShop_DataAccess.Repository.IRepository;
 using BuildingShop_Models;
+using BuildingShop_Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 
 namespace BuildingShop.Controllers
 {
+    [Authorize(Roles = WC.AdminRole)]
     public class AppTypeController : Controller
     {
-        private readonly AppDbContext db;        
+        private readonly IAppTypeRepository appTypeRepo;        
 
-        public AppTypeController(AppDbContext db)
+        public AppTypeController(IAppTypeRepository appTypeRepo)
         {
-            this.db = db;
+            this.appTypeRepo = appTypeRepo;
         }
 
 
         public IActionResult Index()
         {
-            IEnumerable<AppType> objList = db.AppType;
+            IEnumerable<AppType> objList = appTypeRepo.GetAll();
             return View(objList);
         }
 
@@ -36,8 +41,8 @@ namespace BuildingShop.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.AppType.Add(obj);
-                db.SaveChanges();
+                appTypeRepo.Add(obj);
+                appTypeRepo.Save();
                 return RedirectToAction("Index");
             }
             return View(obj);
@@ -50,7 +55,7 @@ namespace BuildingShop.Controllers
             {
                 return NotFound();
             }
-            var obj = db.AppType.Find(id);
+            var obj = appTypeRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
@@ -66,8 +71,8 @@ namespace BuildingShop.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.AppType.Update(obj);
-                db.SaveChanges();
+                appTypeRepo.Update(obj);
+                appTypeRepo.Save();
                 return RedirectToAction("Index");
             }
             return View(obj);
@@ -81,7 +86,7 @@ namespace BuildingShop.Controllers
             {
                 return NotFound();
             }
-            var obj = db.AppType.Find(id);
+            var obj = appTypeRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
@@ -95,13 +100,13 @@ namespace BuildingShop.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeletePost(int? id)
         {
-            var obj = db.AppType.Find(id);
+            var obj = appTypeRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
             }
-            db.AppType.Remove(obj);
-            db.SaveChanges();
+            appTypeRepo.Remove(obj);
+            appTypeRepo.Save();
             return RedirectToAction("Index");
 
         }

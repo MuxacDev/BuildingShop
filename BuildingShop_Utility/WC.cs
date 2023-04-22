@@ -9,5 +9,10 @@
         public const string CustomerRole = "Customer";
 
         public const string EmailAdmin = "admin@email";
+
+        public const string CategoryName = "Category";
+
+        public const string AppTypeName = "AppType";
+
     }
 }
