@@ -1,4 +1,5 @@
 ﻿using BuildingShop_DataAccess;
+using BuildingShop_DataAccess.Repository.IRepository;
 using BuildingShop_Models;
 using BuildingShop_Models.ViewModels;
 using BuildingShop_Utility;
@@ -16,20 +17,22 @@ namespace BuildingShop.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> logger;
-        private readonly AppDbContext db;
+        private readonly IProductRepository prodRepo;
+        private readonly ICategoryRepository catRepo;
 
-        public HomeController(ILogger<HomeController> logger, AppDbContext db)
+        public HomeController(ILogger<HomeController> logger, IProductRepository prodRepo,ICategoryRepository catRepo)
         {
             this.logger = logger;
-            this.db = db;
+            this.prodRepo = prodRepo;
+            this.catRepo = catRepo;
         }
 
         public IActionResult Index()
         {
             HomeVM homeVM = new HomeVM()
             {
-                Products = db.Product.Include(u => u.Category).Include(u => u.AppType),
-                Categories = db.Category
+                Products = prodRepo.GetAll(includeProperties: "Category,AppType"),
+                Categories = catRepo.GetAll()
             };
             return View(homeVM);
         }
@@ -47,10 +50,8 @@ namespace BuildingShop.Controllers
 
             DetailsVM detailsVM = new DetailsVM
             {
-                Product = db.Product.Include(u => u.Category).Include(u => u.AppType)
-                .Where(u => u.Id == id).FirstOrDefault(),
+                Product = prodRepo.FirstOrDefault(u => u.Id == id,includeProperties: "Category,AppType"),
                 ExistsInCart = false
-
             };
 
             foreach(var item in shoppingCartList)

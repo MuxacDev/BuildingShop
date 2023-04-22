@@ -53,6 +53,9 @@ namespace BuildingShop
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IAppTypeRepository, AppTypeRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IInquiryHeaderRepository, InquiryHeaderRepository>();
+            services.AddScoped<IInquiryDetailRepository, InquiryDetailRepository>();
+            services.AddScoped<IAppUserRepository, AppUserRepository>();
 
             services.AddControllersWithViews();
         }

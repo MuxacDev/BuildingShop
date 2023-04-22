@@ -1,10 +1,12 @@
 ﻿using BuildingShop_DataAccess;
+using BuildingShop_DataAccess.Repository.IRepository;
 using BuildingShop_Models;
 using BuildingShop_Models.ViewModels;
 using BuildingShop_Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,19 +17,33 @@ namespace BuildingShop.Controllers
 {
     [Authorize]
     public class CartController : Controller
-    {
-        private readonly AppDbContext db;
+    {        
         private readonly IWebHostEnvironment env;
         private readonly IMailService emailSender;
+        private readonly IAppUserRepository userRepo;
+        private readonly IProductRepository prodRepo;
+        private readonly IInquiryHeaderRepository inqHRepo;
+        private readonly IInquiryDetailRepository inqDRepo;
 
         [BindProperty]
         public ProductUserVM ProductUserVM { get; set; }
 
-        public CartController(AppDbContext db, IWebHostEnvironment env, IMailService emailSender)
-        {
-            this.db = db;
+        public CartController(
+            AppDbContext db,
+            IWebHostEnvironment env,
+            IMailService emailSender,
+            IAppUserRepository userRepo,
+            IProductRepository prodRepo,
+            IInquiryHeaderRepository inqHRepo,
+            IInquiryDetailRepository inqDRepo
+            )
+        {            
             this.env = env;
             this.emailSender = emailSender;
+            this.userRepo = userRepo;
+            this.prodRepo = prodRepo;
+            this.inqHRepo = inqHRepo;
+            this.inqDRepo = inqDRepo;
         }
 
         public IActionResult Index()
@@ -42,7 +58,7 @@ namespace BuildingShop.Controllers
             }
 
             List<int> prodInCart = shoppingCartList.Select(i=>i.ProductId).ToList();
-            IEnumerable<Product> prodList = db.Product.Where(u => prodInCart.Contains(u.Id));
+            IEnumerable<Product> prodList = prodRepo.GetAll(u => prodInCart.Contains(u.Id));
 
             return View(prodList);
         }
@@ -72,11 +88,11 @@ namespace BuildingShop.Controllers
             }
 
             List<int> prodInCart = shoppingCartList.Select(i => i.ProductId).ToList();
-            IEnumerable<Product> prodList = db.Product.Where(u => prodInCart.Contains(u.Id));
+            IEnumerable<Product> prodList = prodRepo.GetAll(u => prodInCart.Contains(u.Id));
 
             ProductUserVM = new ProductUserVM()
             {
-                AppUser=db.AppUser.FirstOrDefault(u=>u.Id==claim.Value),
+                AppUser=userRepo.FirstOrDefault(u=>u.Id==claim.Value),
                 ProductList=prodList.ToList()
             };
 
@@ -90,6 +106,10 @@ namespace BuildingShop.Controllers
         [ActionName("Summary")]
         public IActionResult SummaryPost(ProductUserVM productUserVM)
         {
+            var claimsIdentity=(ClaimsIdentity)User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+
             var pathToTemplate = env.WebRootPath +
                 Path.DirectorySeparatorChar.ToString() +
                 "templates" +
@@ -119,6 +139,30 @@ namespace BuildingShop.Controllers
                 productListSB.ToString());
 
             emailSender.SendMessage(WC.EmailAdmin,subject,messageBody);
+
+            InquiryHeader inquiryHeader = new InquiryHeader()
+            {
+                AppUserId = claim.Value,
+                FullName= productUserVM.AppUser.FullName,
+                Email= productUserVM.AppUser.Email,
+                PhoneNumber= productUserVM.AppUser.PhoneNumber,
+                InquiryDate=DateTime.Now
+            };
+
+            inqHRepo.Add( inquiryHeader );
+            inqHRepo.Save();
+
+            foreach (var prod in ProductUserVM.ProductList)
+            {
+                InquiryDetail inquiryDetail = new InquiryDetail()
+                {
+                    InquiryHeaderId = inquiryHeader.Id,
+                    ProductId = prod.Id
+                };
+                inqDRepo.Add( inquiryDetail );                
+            }
+            inqDRepo.Save();
+
 
             return RedirectToAction(nameof(InquiryConfirmation));
         }
