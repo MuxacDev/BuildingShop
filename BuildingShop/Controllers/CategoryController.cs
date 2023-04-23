@@ -43,8 +43,10 @@ namespace BuildingShop.Controllers
             {
                 catRepo.Add(obj);
                 catRepo.Save();
+                TempData[WC.Success] = "Category created successfully";
                 return RedirectToAction("Index");
             }
+            TempData[WC.Error] = "Error while creating category";
             return View(obj);
             
         }
@@ -74,8 +76,10 @@ namespace BuildingShop.Controllers
             {
                 catRepo.Update(obj);
                 catRepo.Save();
+                TempData[WC.Success] = "Action completed successfully";
                 return RedirectToAction("Index");
             }
+            TempData[WC.Error] = "Error";
             return View(obj);
 
         }
@@ -104,10 +108,12 @@ namespace BuildingShop.Controllers
             var obj = catRepo.Find(id.GetValueOrDefault());
             if (obj==null)
             {
+                TempData[WC.Error] = "Error";
                 return NotFound(); 
             }
             catRepo.Remove(obj);
             catRepo.Save();
+            TempData[WC.Success] = "Action completed successfully";
             return RedirectToAction("Index");
 
         }

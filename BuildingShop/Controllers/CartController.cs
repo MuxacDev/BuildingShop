@@ -163,7 +163,7 @@ namespace BuildingShop.Controllers
             }
             inqDRepo.Save();
 
-
+            TempData[WC.Success] = "Action completed successfully";
             return RedirectToAction(nameof(InquiryConfirmation));
         }
 
@@ -187,8 +187,8 @@ namespace BuildingShop.Controllers
 
             shoppingCartList.Remove(shoppingCartList.FirstOrDefault(u => u.ProductId == id));
             HttpContext.Session.Set(WC.SessionCart, shoppingCartList);
-            
 
+            TempData[WC.Success] = "Action completed successfully";
             return RedirectToAction(nameof(Index));
         }
     }

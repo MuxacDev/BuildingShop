@@ -138,13 +138,14 @@ namespace BuildingShop.Controllers
                     }
                     prodRepo.Update(productVM.Product);
                 }
+                TempData[WC.Success] = "Action completed successfully";
                 prodRepo.Save();
                 return RedirectToAction("Index");
             }
             productVM.CategorySelectList = prodRepo.GetAllDropdownList(WC.CategoryName);
-            productVM.AppTypeSelectList = prodRepo.GetAllDropdownList(WC.AppTypeName);          
+            productVM.AppTypeSelectList = prodRepo.GetAllDropdownList(WC.AppTypeName);
 
-
+            TempData[WC.Error] = "Error";
             return View(productVM);
             
         }        
@@ -174,6 +175,7 @@ namespace BuildingShop.Controllers
             var obj = prodRepo.Find(id.GetValueOrDefault());
             if (obj==null)
             {
+                TempData[WC.Error] = "Error";
                 return NotFound(); 
             }
             
@@ -188,6 +190,7 @@ namespace BuildingShop.Controllers
 
             prodRepo.Remove(obj);
             prodRepo.Save();
+            TempData[WC.Success] = "Action completed successfully";
             return RedirectToAction("Index");
 
         }

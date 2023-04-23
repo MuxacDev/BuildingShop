@@ -43,8 +43,10 @@ namespace BuildingShop.Controllers
             {
                 appTypeRepo.Add(obj);
                 appTypeRepo.Save();
+                TempData[WC.Success] = "Action completed successfully";
                 return RedirectToAction("Index");
             }
+            TempData[WC.Error] = "Error";
             return View(obj);
         }
 
@@ -73,8 +75,10 @@ namespace BuildingShop.Controllers
             {
                 appTypeRepo.Update(obj);
                 appTypeRepo.Save();
+                TempData[WC.Success] = "Action completed successfully";
                 return RedirectToAction("Index");
             }
+            TempData[WC.Error] = "Error";
             return View(obj);
 
         }
@@ -103,10 +107,12 @@ namespace BuildingShop.Controllers
             var obj = appTypeRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
+                TempData[WC.Error] = "Error";
                 return NotFound();
             }
             appTypeRepo.Remove(obj);
             appTypeRepo.Save();
+            TempData[WC.Success] = "Action completed successfully";
             return RedirectToAction("Index");
 
         }
