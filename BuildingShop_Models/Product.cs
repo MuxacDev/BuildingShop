@@ -5,6 +5,10 @@ namespace BuildingShop_Models
 {
     public class Product
     {
+        public Product()
+        {
+            TempQuantity= 1;
+        }
         [Key]
         public int Id { get; set; }
         [Required]
@@ -27,5 +31,8 @@ namespace BuildingShop_Models
         [ForeignKey("AppTypeId")]
         public virtual AppType AppType { get; set; }
 
+        [NotMapped]
+        [Range(1,10000)]
+        public int TempQuantity { get; set; }
     }
 }

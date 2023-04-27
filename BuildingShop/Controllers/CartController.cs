@@ -17,7 +17,7 @@ namespace BuildingShop.Controllers
 {
     [Authorize]
     public class CartController : Controller
-    {        
+    {
         private readonly IWebHostEnvironment env;
         private readonly IMailService emailSender;
         private readonly IAppUserRepository userRepo;
@@ -37,7 +37,7 @@ namespace BuildingShop.Controllers
             IInquiryHeaderRepository inqHRepo,
             IInquiryDetailRepository inqDRepo
             )
-        {            
+        {
             this.env = env;
             this.emailSender = emailSender;
             this.userRepo = userRepo;
@@ -49,34 +49,73 @@ namespace BuildingShop.Controllers
         public IActionResult Index()
         {
             List<ShoppingCart> shoppingCartList = new List<ShoppingCart>();
-            if(HttpContext.Session.Get<IEnumerable<ShoppingCart>>(WC.SessionCart)!=null
-                && HttpContext.Session.Get<IEnumerable<ShoppingCart>>(WC.SessionCart).Count()>0)
+            if (HttpContext.Session.Get<IEnumerable<ShoppingCart>>(WC.SessionCart) != null
+                && HttpContext.Session.Get<IEnumerable<ShoppingCart>>(WC.SessionCart).Count() > 0)
             {
                 //session exists
                 shoppingCartList = HttpContext.Session.Get<List<ShoppingCart>>(WC.SessionCart);
 
             }
 
-            List<int> prodInCart = shoppingCartList.Select(i=>i.ProductId).ToList();
-            IEnumerable<Product> prodList = prodRepo.GetAll(u => prodInCart.Contains(u.Id));
+            List<int> prodInCart = shoppingCartList.Select(i => i.ProductId).ToList();
+            IEnumerable<Product> prodListTemp = prodRepo.GetAll(u => prodInCart.Contains(u.Id));
+            IList<Product> prodList = new List<Product>();
+
+            foreach (var cartObj in shoppingCartList)
+            {
+                Product prodTemp = prodListTemp.FirstOrDefault(u => u.Id == cartObj.ProductId);
+                prodTemp.TempQuantity = cartObj.Quantity;
+                prodList.Add(prodTemp);
+            }
 
             return View(prodList);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ActionName("Index")]
-        public IActionResult IndexPost()
+        public IActionResult IndexPost(IEnumerable<Product> prodList)
         {
-            
+            List<ShoppingCart> shoppingCartList = new List<ShoppingCart>();
+            foreach (Product prod in prodList)
+            {
+                shoppingCartList.Add(new ShoppingCart { ProductId = prod.Id, Quantity = prod.TempQuantity });
+            }
+            HttpContext.Session.Set(WC.SessionCart, shoppingCartList);            
 
             return RedirectToAction(nameof(Summary));
         }
 
         public IActionResult Summary()
         {
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-            //var userId = User.FindFirstValue(ClaimTypes.Name);
+            AppUser appUser;
+            if(User.IsInRole(WC.AdminRole))
+            {
+                if(HttpContext.Session.Get<int>(WC.SessionInquiryId)!=0)
+                {
+                    //cart has been loaded using an inquiry
+                    InquiryHeader inquiryHeader = inqHRepo.FirstOrDefault(u => u.Id == HttpContext.Session.Get<int>(WC.SessionInquiryId));
+                    appUser = new AppUser()
+                    {
+                        Email = inquiryHeader.Email,
+                        FullName = inquiryHeader.FullName,
+                        PhoneNumber = inquiryHeader.PhoneNumber
+                    };
+                }
+                else
+                {
+                    appUser = new AppUser();
+                }
+            }
+            else
+            {
+                var claimsIdentity = (ClaimsIdentity)User.Identity;
+                var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+                //var userId = User.FindFirstValue(ClaimTypes.Name);
+
+                appUser = userRepo.FirstOrDefault(u => u.Id == claim.Value);
+            }
+            
+            
 
             List<ShoppingCart> shoppingCartList = new List<ShoppingCart>();
             if (HttpContext.Session.Get<IEnumerable<ShoppingCart>>(WC.SessionCart) != null
@@ -92,10 +131,16 @@ namespace BuildingShop.Controllers
 
             ProductUserVM = new ProductUserVM()
             {
-                AppUser=userRepo.FirstOrDefault(u=>u.Id==claim.Value),
-                ProductList=prodList.ToList()
+                AppUser = appUser,
+                //ProductList = prodList.ToList()
             };
 
+            foreach(var cartObj in shoppingCartList)
+            {
+                Product prodTemp = prodRepo.FirstOrDefault(u => u.Id == cartObj.ProductId);
+                prodTemp.TempQuantity = cartObj.Quantity;
+                ProductUserVM.ProductList.Add(prodTemp);
+            }
 
 
             return View(ProductUserVM);
@@ -106,7 +151,7 @@ namespace BuildingShop.Controllers
         [ActionName("Summary")]
         public IActionResult SummaryPost(ProductUserVM productUserVM)
         {
-            var claimsIdentity=(ClaimsIdentity)User.Identity;
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
 
@@ -118,7 +163,7 @@ namespace BuildingShop.Controllers
 
             var subject = "New Inquiry";
             string HtmlBody = "";
-            using(StreamReader sr = System.IO.File.OpenText(pathToTemplate))
+            using (StreamReader sr = System.IO.File.OpenText(pathToTemplate))
             {
                 HtmlBody = sr.ReadToEnd();
             }
@@ -128,7 +173,7 @@ namespace BuildingShop.Controllers
             Products: {3}*/
 
             StringBuilder productListSB = new StringBuilder();
-            foreach(var prod in ProductUserVM.ProductList)
+            foreach (var prod in ProductUserVM.ProductList)
             {
                 productListSB.Append($" - Name: {prod.Name} <span style='font-size: 14px;'> (ID: {prod.Id})</span><br/>");
             }
@@ -138,18 +183,18 @@ namespace BuildingShop.Controllers
                 productUserVM.AppUser.PhoneNumber,
                 productListSB.ToString());
 
-            emailSender.SendMessage(WC.EmailAdmin,subject,messageBody);
+            emailSender.SendMessage(WC.EmailAdmin, subject, messageBody);
 
             InquiryHeader inquiryHeader = new InquiryHeader()
             {
                 AppUserId = claim.Value,
-                FullName= productUserVM.AppUser.FullName,
-                Email= productUserVM.AppUser.Email,
-                PhoneNumber= productUserVM.AppUser.PhoneNumber,
-                InquiryDate=DateTime.Now
+                FullName = productUserVM.AppUser.FullName,
+                Email = productUserVM.AppUser.Email,
+                PhoneNumber = productUserVM.AppUser.PhoneNumber,
+                InquiryDate = DateTime.Now
             };
 
-            inqHRepo.Add( inquiryHeader );
+            inqHRepo.Add(inquiryHeader);
             inqHRepo.Save();
 
             foreach (var prod in ProductUserVM.ProductList)
@@ -159,7 +204,7 @@ namespace BuildingShop.Controllers
                     InquiryHeaderId = inquiryHeader.Id,
                     ProductId = prod.Id
                 };
-                inqDRepo.Add( inquiryDetail );                
+                inqDRepo.Add(inquiryDetail);
             }
             inqDRepo.Save();
 
@@ -189,6 +234,19 @@ namespace BuildingShop.Controllers
             HttpContext.Session.Set(WC.SessionCart, shoppingCartList);
 
             TempData[WC.Success] = "Action completed successfully";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult UpdateCart(IEnumerable<Product> prodList)
+        {
+            List<ShoppingCart> shoppingCartList = new List<ShoppingCart>();            
+            foreach (Product prod in prodList)
+            {
+                shoppingCartList.Add(new ShoppingCart { ProductId = prod.Id, Quantity = prod.TempQuantity });
+            }
+            HttpContext.Session.Set(WC.SessionCart, shoppingCartList);
             return RedirectToAction(nameof(Index));
         }
     }
